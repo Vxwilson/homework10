@@ -77,7 +77,7 @@
             "width": 1000,
             "height": 300,
             // "title": { "text": "Coffee Exports in yearSelection" },
-            "title": { "text": { "signal": "'Exports in ' + yearSelection" } }, // Use the dynamic title
+            "title": { "text": { "signal": "'Coffee Exports in ' + yearSelection" } }, // Use the dynamic title
 
             "layer": [
               {
@@ -106,6 +106,30 @@
                   ]
                 }
               },
+              // annotate the longest bar using max
+              {
+                "transform": [
+                  {"calculate": "toNumber(datum.export)", "as": "export"},
+                  {"aggregate": [{"op": "max", "field": "export", "as": "max_export"}]},
+                  {"calculate": "'In ' + yearSelection + ', ' + format(datum.max_export, '.0f') + ' kilograms of coffee is exported by a single country.'", "as": "formatted_export"}
+                ],
+                "mark": {
+                  "type": "text",
+                  "align": "left",
+                  "baseline": "middle",
+                  "format": ".2f",
+                  "dx": 5,
+                  "dy": -5,
+                  "fontSize": 12,
+                  "fontWeight": "bold",
+                  "color": "#333",
+                },
+                "encoding": {
+                  "text": {"field": "formatted_export"},
+                  "y": {"value": 20},
+                  "x": {"value": 15}
+                }
+              }
             ]
           },
           {
