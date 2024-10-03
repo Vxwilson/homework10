@@ -103,7 +103,7 @@
                 // string for export tooltip
                 "transform": [
                   {
-                    "calculate": "'In ' + yearSelection + ', '+ datum.exports + ' exported ' + format(datum.export, '.0f') + ' kilograms of coffee.'",
+                    "calculate": "format(datum.export * 1000 / 1000000, '.2f') + ' million bags (60-kg) of coffee.'",
                     "as": "exporttooltip"
                   }, // format the export value to 0 decimal places
                   {
@@ -154,7 +154,7 @@
                   { "calculate": "toNumber(datum.export)", "as": "export" },
                   { "aggregate": [{ "op": "max", "field": "export", "as": "max_export" }] },
                   {
-                    "calculate": "split('Brazil exported ' + format(datum.max_export * 1000 / 1000000, '.2f') + ' million bags (60-kg) of coffee,\\nbeing first place at a huge margin.', '\\n')",
+                    "calculate": "split('Brazil exported ' + format(datum.max_export * 1000 / 1000000, '.2f') + ' million bags (60-kg) of coffee,\\nleading first place at a huge margin.', '\\n')",
                     "as": "formatted_export"
                   }
                   // { "calculate": "'In ' + yearSelection + ', ' + format(datum.max_export, '.0f') + ' kilograms of coffee is exported by Brzail, which has constantly been the first place.'", "as": "formatted_export" }
@@ -215,7 +215,6 @@
           },
           {
             "title": { "text": "World Map" },
-            // "title": { "text": { "signal": "'Exports in ' + yearSelection" } },
             "width": 1000,
             "height": 350,
             "data": {
@@ -231,7 +230,8 @@
               {
                 "transform": [
                   {
-                    "calculate": "'Data is not available in ' + datum.properties.NAME",
+                    "calculate": "'No production'",
+                    // "calculate": "'No production in ' + datum.properties.NAME",
                     "as": "note"
                   }
                 ],
@@ -262,36 +262,30 @@
                   {
                     "calculate": "datum['' + yearSelection]", // Access the correct year data
                     "as": "Count"
+                  },
+                  {
+                    "calculate": "format(datum['' + yearSelection] * 1000 / 1000000, '.2f') + ' million bags (60-kg) of coffee.'",
+                    "as": "exporttooltip"
                   }
                 ],
                 "mark": { "type": "geoshape", "stroke": "white" },
                 "encoding": {
                   "color": {
                     "field": "Count",
-                    // "type": "quantitative",
-                    // "scale": {
-                    //   "type": "threshold",
-                    // "domain": [1, 10, 100],
-                    // "range": ["#fdbe85", "#fd8d3c", "#e6550d", "#a63603"],
                     "type": "quantitative",
                     "scale": {
                       // "scheme": "warmgreys"
                       "scheme": "lightorange"
                     },
-
-
-
                   },
                   "tooltip": [
                     { "field": "properties.NAME", "type": "nominal", "title": "Country" },
                     {
-                      "field": "Count", "type": "quantitative", "title": "Exports:"
+                      "field": "exporttooltip", "title": "Exports"
                     }
                   ]
                 }
               },
-              // graticule
-
             ]
           }
         ]
