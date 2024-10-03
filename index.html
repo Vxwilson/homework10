@@ -39,6 +39,7 @@
           }
         },
         "data": {
+          // "url": "data/total-production.csv",
           "url": "data/exports-calendar-year.csv",
           "format": { "type": "csv" },
           "name": "exports_data"
@@ -69,7 +70,25 @@
 
           {
             "filter": "toNumber(datum.year) == yearSelection"
-          }
+          },
+          {
+            "calculate": "toNumber(datum.export) > 0",
+            "as": "hasExport"
+          },
+          {
+            "filter": "datum.hasExport == true"
+          },
+          // {
+          //   // calculate number of countries
+          //   "joinaggregate": [{ "op": "count", "as": "countryCount" }],
+          // }
+          // {
+          //   "aggregate": [{ "op": "count", "as": "countryCount", "field": "hasExport" }],
+          //   "groupby": ["hasExport"]  //This groups so the next filter will work
+          // },
+          // {
+          //   "filter": "datum.hasExport == true" // Filters out the group with hasExport false
+          // }
 
         ],
         "vconcat": [
@@ -84,13 +103,14 @@
                 // string for export tooltip
                 "transform": [
                   {
-                    "calculate": "'In ' + yearSelection + ', ' + datum.exports + ' exported ' + format(datum.export, '.0f') + ' kilograms of coffee.'",
+                    "calculate": "'In ' + yearSelection + ', '+ datum.exports + ' exported ' + format(datum.export, '.0f') + ' kilograms of coffee.'",
                     "as": "exporttooltip"
                   }, // format the export value to 0 decimal places
                   {
                     "calculate": "toNumber(datum.export)",
                     "as": "export"
                   }
+
                 ],
                 "mark": {
                   "type": "bar",
@@ -101,7 +121,8 @@
                   "y": {
                     "field": "export",
                     "type": "quantitative",
-                    "title": "Exports (60kg bags)"
+                    "title": "Exports (thousand 60kg bags)"
+                    // "scale": { "type": "log" }
                   },
                   "x": {
                     "field": "exports",
@@ -130,27 +151,66 @@
               // annotate the longest bar using max
               {
                 "transform": [
-                  {"calculate": "toNumber(datum.export)", "as": "export"},
-                  {"aggregate": [{"op": "max", "field": "export", "as": "max_export"}]},
-                  {"calculate": "'In ' + yearSelection + ', ' + format(datum.max_export, '.0f') + ' kilograms of coffee is exported by a single country.'", "as": "formatted_export"}
+                  { "calculate": "toNumber(datum.export)", "as": "export" },
+                  { "aggregate": [{ "op": "max", "field": "export", "as": "max_export" }] },
+                  {
+                    "calculate": "split('Brazil exported ' + format(datum.max_export * 1000 / 1000000, '.2f') + ' million bags (60-kg) of coffee,\\nbeing first place at a huge margin.', '\\n')",
+                    "as": "formatted_export"
+                  }
+                  // { "calculate": "'In ' + yearSelection + ', ' + format(datum.max_export, '.0f') + ' kilograms of coffee is exported by Brzail, which has constantly been the first place.'", "as": "formatted_export" }
                 ],
                 "mark": {
                   "type": "text",
                   "align": "left",
                   "baseline": "middle",
                   "format": ".2f",
-                  "dx": 5,
-                  "dy": -5,
-                  "fontSize": 12,
+                  "dx": 30,
+                  "dy": 5,
+                  "fontSize": 13,
+                  "fontWeight": "bold",
+                  "color": "#333",
+                  "lineBreak": "\\n"
+                },
+                "encoding": {
+                  "text": { "field": "formatted_export" },
+                  "y": { "value": 20 },
+                  "x": { "value": 15 }
+                }
+              },
+
+              // annotate number of countries
+              {
+                "transform": [
+                  // find sum of exports by aggregating
+                  {
+                    "aggregate": [{ "op": "sum", "field": "export", "as": "totalExport" },
+                    { "op": "count", "as": "countryCount" }
+                    ]
+                  },
+                  // only annotate once, so aggregate
+                  // { "aggregate": [{ "op": "count", "as": "countryCount" }] },
+                  { "calculate": "split('In ' + yearSelection + ', \\n' + datum.countryCount  + ' countries exported a total of \\n' +  format(datum.totalExport * 1000 / 1000000, '.2f') + ' million bags of coffee.', '\\n')", "as": "countryCount" }
+                ],
+                "mark": {
+                  "type": "text",
+                  "align": "left",
+                  "baseline": "middle",
+                  "format": ".2f",
+                  "dx": 650,
+                  "dy": 230,
+                  "fontSize": 13,
                   "fontWeight": "bold",
                   "color": "#333",
                 },
                 "encoding": {
-                  "text": {"field": "formatted_export"},
-                  "y": {"value": 20},
-                  "x": {"value": 15}
+                  "text": { "field": "countryCount" },
+                  "y": { "value": 20 },
+                  "x": { "value": 15 }
                 }
               }
+
+
+
             ]
           },
           {
@@ -164,10 +224,10 @@
             },
             "projection": { "type": "equalEarth" },
             "layer": [
-            {
-      "data": { "graticule": true },
-      "mark": { "type": "geoshape", "stroke": "lightgray", "strokeWidth": 0.5 }
-    },
+              {
+                "data": { "graticule": true },
+                "mark": { "type": "geoshape", "stroke": "lightgray", "strokeWidth": 0.5 }
+              },
               {
                 "transform": [
                   {
@@ -211,16 +271,16 @@
                     // "type": "quantitative",
                     // "scale": {
                     //   "type": "threshold",
-                      // "domain": [1, 10, 100],
-                      // "range": ["#fdbe85", "#fd8d3c", "#e6550d", "#a63603"],
-                      "type": "quantitative",
+                    // "domain": [1, 10, 100],
+                    // "range": ["#fdbe85", "#fd8d3c", "#e6550d", "#a63603"],
+                    "type": "quantitative",
                     "scale": {
                       // "scheme": "warmgreys"
                       "scheme": "lightorange"
                     },
-                   
-                 
-                  
+
+
+
                   },
                   "tooltip": [
                     { "field": "properties.NAME", "type": "nominal", "title": "Country" },
